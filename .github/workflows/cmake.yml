@@ -71,6 +71,28 @@ jobs:
 
       # Note: Cannot run tests as the runner is x86_64
 
+  linux-arm64-clang-cross:
+    name: Linux (AArch64 Clang Cross-Compile)
+    runs-on: ubuntu-latest # Use x86_64 runner for cross-compilation
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Clang and LLD
+        run: |
+          sudo apt update
+          sudo apt install -y clang lld
+
+      - name: Configure CMake for AArch64 Clang Cross-Compilation
+        env:
+          CC: clang
+          CXX: clang++
+        run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_SYSTEM_NAME=Linux -DCMAKE_SYSTEM_PROCESSOR=aarch64 -DCMAKE_C_FLAGS="--target=aarch64-linux-gnu" -DCMAKE_CXX_FLAGS="--target=aarch64-linux-gnu" -DCMAKE_EXE_LINKER_FLAGS="-fuse-ld=lld" -DCMAKE_SHARED_LINKER_FLAGS="-fuse-ld=lld" -DCMAKE_MODULE_LINKER_FLAGS="-fuse-ld=lld" -DLIBHAT_TESTING=OFF # Disable tests as they cannot run
+
+      - name: Build
+        run: cmake --build ${{github.workspace}}/build -j 4
+
+      # Note: Cannot run tests as the runner is x86_64
+
   linux-arm64-qemu-test:
     name: Linux (AArch64 QEMU Test)
     runs-on: ubuntu-latest

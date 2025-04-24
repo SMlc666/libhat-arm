@@ -141,19 +141,12 @@ target_include_directories(libhat PUBLIC
 )
 
 target_compile_definitions(libhat PUBLIC
-    # Platform/Arch defines
-    "$<$<BOOL:${LIBHAT_LINUX}>:LIBHAT_LINUX>"
-    "$<$<BOOL:${LIBHAT_WINDOWS}>:LIBHAT_WINDOWS>"
-    "$<$<BOOL:${LIBHAT_MACOS}>:LIBHAT_MACOS>"
-    "$<$<BOOL:${LIBHAT_ARM}>:LIBHAT_ARM>"
-    "$<$<BOOL:${LIBHAT_AARCH64}>:LIBHAT_AARCH64>"
-    "$<$<BOOL:${LIBHAT_X86_64}>:LIBHAT_X86_64>"
-    "$<$<BOOL:${LIBHAT_X86}>:LIBHAT_X86>"
-    # Feature flags
+    # Feature flags (controlled by CMake options)
     "$<$<BOOL:${LIBHAT_DISABLE_SSE}>:LIBHAT_DISABLE_SSE>"
     "$<$<BOOL:${LIBHAT_DISABLE_AVX512}>:LIBHAT_DISABLE_AVX512>"
     "$<$<BOOL:${LIBHAT_HINT_X86_64}>:LIBHAT_HINT_X86_64>"
     "$<$<BOOL:${LIBHAT_DISABLE_NEON}>:LIBHAT_DISABLE_NEON>"
+    # Platform/Arch defines are now expected to come from platform.h based on compiler built-ins
 )
 
 # Add NEON compile flags for ARM targets if NEON is enabled

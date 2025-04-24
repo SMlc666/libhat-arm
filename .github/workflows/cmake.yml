@@ -52,6 +52,51 @@ jobs:
         working-directory: ${{github.workspace}}/build
         run: ctest -C ${{env.BUILD_TYPE}} -R libhat_test_.*
 
+  linux-arm64-cross:
+    name: Linux (AArch64 Cross-Compile)
+    runs-on: ubuntu-latest # Use x86_64 runner for cross-compilation
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install AArch64 Cross-Compiler
+        run: |
+          sudo apt update
+          sudo apt install -y g++-aarch64-linux-gnu
+
+      - name: Configure CMake for AArch64 Cross-Compilation
+        run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_SYSTEM_NAME=Linux -DCMAKE_SYSTEM_PROCESSOR=aarch64 -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++ -DLIBHAT_TESTING=OFF # Disable tests as they cannot run
+
+      - name: Build
+        run: cmake --build ${{github.workspace}}/build -j 4
+
+      # Note: Cannot run tests as the runner is x86_64
+
+  linux-arm64-qemu-test:
+    name: Linux (AArch64 QEMU Test)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64 # Setup QEMU for arm64 architecture
+
+      - name: Install AArch64 Cross-Compiler and QEMU static
+        run: |
+          sudo apt update
+          sudo apt install -y g++-aarch64-linux-gnu qemu-user-static
+
+      - name: Configure CMake for AArch64 Cross-Compilation (with Tests)
+        run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_SYSTEM_NAME=Linux -DCMAKE_SYSTEM_PROCESSOR=aarch64 -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++ -DLIBHAT_TESTING=ON
+
+      - name: Build
+        run: cmake --build ${{github.workspace}}/build -j 4
+
+      - name: Test (via QEMU)
+        working-directory: ${{github.workspace}}/build
+        run: qemu-aarch64-static ./bin/libhat_tests # Assuming tests executable is named libhat_tests and located in build/bin
+
   windows:
     strategy:
       matrix:

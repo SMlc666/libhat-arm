@@ -12,6 +12,45 @@ project(libhat
     LANGUAGES C CXX
 )
 
+# Platform and Architecture Detection
+include(CMakeDetermineSystem)
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    set(LIBHAT_LINUX 1)
+    message(STATUS "Detected OS: Linux")
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    set(LIBHAT_WINDOWS 1)
+    message(STATUS "Detected OS: Windows")
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    set(LIBHAT_MACOS 1)
+    message(STATUS "Detected OS: macOS")
+else()
+    message(WARNING "Unsupported OS: ${CMAKE_SYSTEM_NAME}")
+endif()
+
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "arm|ARM")
+    set(LIBHAT_ARM 1)
+    message(STATUS "Detected Arch: ARM")
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64|AARCH64")
+    set(LIBHAT_AARCH64 1)
+    message(STATUS "Detected Arch: AArch64")
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64")
+    set(LIBHAT_X86_64 1)
+    message(STATUS "Detected Arch: x86_64")
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "i.86|x86")
+    set(LIBHAT_X86 1)
+    message(STATUS "Detected Arch: x86")
+else()
+    message(WARNING "Unsupported Processor: ${CMAKE_SYSTEM_PROCESSOR}")
+endif()
+# Combine 32-bit and 64-bit flags for convenience where applicable
+if(LIBHAT_X86 OR LIBHAT_X86_64)
+    set(LIBHAT_IS_X86 1)
+endif()
+if(LIBHAT_ARM OR LIBHAT_AARCH64)
+    set(LIBHAT_IS_ARM 1)
+endif()
+
+
 include(CheckCXXCompilerFlag)
 
 option(LIBHAT_STATIC_C_LIB "Build a static version of the C library" OFF)
@@ -19,6 +58,7 @@ option(LIBHAT_SHARED_C_LIB "Build a shared version of the C library" OFF)
 option(LIBHAT_INSTALL_TARGET "Creates install rules for the libhat target" ON)
 option(LIBHAT_DISABLE_SSE "Disables SSE scanning" OFF)
 option(LIBHAT_DISABLE_AVX512 "Disables AVX512 scanning" OFF)
+option(LIBHAT_DISABLE_NEON "Disables NEON scanning (ARM/AArch64)" OFF)
 option(LIBHAT_TESTING "Enable tests" OFF)
 option(LIBHAT_TESTING_ASAN "Enable address sanitizer when testing" ON)
 option(LIBHAT_TESTING_SDE "Run tests using Intel Software Development Emulator" ON)
@@ -64,7 +104,14 @@ set(LIBHAT_SRC
     src/arch/x86/AVX512.cpp
     src/arch/x86/System.cpp
 
-    src/arch/arm/System.cpp)
+    src/arch/arm/System.cpp
+)
+
+# Conditionally add ARM NEON scanner source
+if(LIBHAT_IS_ARM AND NOT LIBHAT_DISABLE_NEON)
+    list(APPEND LIBHAT_SRC src/arch/arm/Scanner.cpp)
+    message(STATUS "Enabling NEON optimized scanner")
+endif()
 
 add_library(libhat STATIC ${LIBHAT_SRC})
 add_library(libhat::libhat ALIAS libhat)
@@ -94,10 +141,35 @@ target_include_directories(libhat PUBLIC
 )
 
 target_compile_definitions(libhat PUBLIC
+    # Platform/Arch defines
+    "$<$<BOOL:${LIBHAT_LINUX}>:LIBHAT_LINUX>"
+    "$<$<BOOL:${LIBHAT_WINDOWS}>:LIBHAT_WINDOWS>"
+    "$<$<BOOL:${LIBHAT_MACOS}>:LIBHAT_MACOS>"
+    "$<$<BOOL:${LIBHAT_ARM}>:LIBHAT_ARM>"
+    "$<$<BOOL:${LIBHAT_AARCH64}>:LIBHAT_AARCH64>"
+    "$<$<BOOL:${LIBHAT_X86_64}>:LIBHAT_X86_64>"
+    "$<$<BOOL:${LIBHAT_X86}>:LIBHAT_X86>"
+    # Feature flags
     "$<$<BOOL:${LIBHAT_DISABLE_SSE}>:LIBHAT_DISABLE_SSE>"
     "$<$<BOOL:${LIBHAT_DISABLE_AVX512}>:LIBHAT_DISABLE_AVX512>"
     "$<$<BOOL:${LIBHAT_HINT_X86_64}>:LIBHAT_HINT_X86_64>"
+    "$<$<BOOL:${LIBHAT_DISABLE_NEON}>:LIBHAT_DISABLE_NEON>"
 )
+
+# Add NEON compile flags for ARM targets if NEON is enabled
+if(LIBHAT_IS_ARM AND NOT LIBHAT_DISABLE_NEON)
+    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+        # Common flags for NEON. Might need adjustment based on specific ARM architecture target.
+        # -mfpu=neon is often sufficient for basic NEON.
+        # Consider adding -mfloat-abi=hard if appropriate for the target.
+        target_compile_options(libhat PRIVATE -mfpu=neon)
+        message(STATUS "Adding NEON compile flags (-mfpu=neon)")
+    elseif(MSVC)
+        # MSVC ARM compilation might enable NEON by default or require different flags.
+        # Check MSVC documentation for ARM NEON flags if needed.
+        message(STATUS "MSVC ARM target detected - NEON might be enabled by default or require specific flags.")
+    endif()
+endif()
 
 if(LIBHAT_STATIC_C_LIB OR LIBHAT_SHARED_C_LIB)
     set(LIBHAT_C_SOURCES

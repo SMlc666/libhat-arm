@@ -49,8 +49,13 @@ namespace hat {
 namespace hat {
 
     struct system_info_arm : hat::system_info {
+        // TODO: Add other relevant ARM CPU info if needed (e.g., vendor, brand)
+        struct {
+            bool neon = false;
+            // TODO: Add other ARM extensions if needed (e.g., crypto, sve)
+        } extensions{};
     private:
-        system_info_arm() = default;
+        system_info_arm(); // Change to non-default constructor to perform detection
         friend const system_info_arm& get_system();
         static const system_info_arm instance;
     };

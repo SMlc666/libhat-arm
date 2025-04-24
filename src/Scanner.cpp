@@ -81,6 +81,16 @@ namespace hat::detail {
         }
 #endif
 #endif
+
+#if (defined(LIBHAT_ARM) || defined(LIBHAT_ARM64)) && !defined(LIBHAT_DISABLE_NEON) // Add LIBHAT_ARM/LIBHAT_ARM64 and LIBHAT_DISABLE_NEON later
+        // Placeholder: Assume 'neon' member will be added to system_info::extensions
+        const auto& ext = get_system().extensions;
+        if (ext.neon) { // Check for NEON support (requires modification in System.cpp later)
+            this->scanner = resolve_scanner<scan_mode::NEON>(*this);
+            return;
+        }
+#endif
+
         // If none of the vectorized implementations are available/supported, then fallback to scanning per-byte
         this->scanner = resolve_scanner<scan_mode::Single>(*this);
     }

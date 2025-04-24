@@ -1,9 +1,52 @@
 #include <libhat/defines.hpp>
-#ifdef LIBHAT_ARM
+
+// Check for ARM or AArch64. Note: LIBHAT_ARM might need adjustment or use __arm__/__aarch64__ directly.
+#if defined(LIBHAT_ARM) || defined(LIBHAT_AARCH64) // Assuming LIBHAT_AARCH64 will be defined for 64-bit ARM
 
 #include <libhat/system.hpp>
 
+#ifdef LIBHAT_LINUX // Only implement Linux detection for now
+#include <sys/auxv.h>
+#include <asm/hwcap.h> // For HWCAP_NEON definition
+#endif
+
 namespace hat {
 
-}
+#ifdef LIBHAT_LINUX
+    static bool detect_neon() {
+        unsigned long hwcap = getauxval(AT_HWCAP);
+        return (hwcap & HWCAP_NEON) != 0;
+        // Note: For AArch64, NEON is mandatory, but checking HWCAP is still good practice.
+        // More robust checks might involve AT_HWCAP2 for specific NEON features if needed later.
+    }
+#else
+    // Placeholder for other OS (Windows on ARM, macOS ARM)
+    static bool detect_neon() {
+        // TODO: Implement detection for other ARM platforms
+        return false;
+    }
 #endif
+
+    // Define the constructor for system_info_arm
+    system_info_arm::system_info_arm() {
+        // Call the detection function and store the result
+        this->extensions.neon = detect_neon();
+
+        // Initialize other system_info members if needed (e.g., page_size)
+        // This might require calling OS-specific functions like sysconf(_SC_PAGESIZE)
+        // For simplicity, inheriting the base constructor might handle this if it does detection.
+        // Let's assume base constructor handles page_size for now.
+    }
+
+    // Define the static instance (required by the header declaration)
+    // This will call the constructor upon program startup.
+    const system_info_arm system_info_arm::instance;
+
+    // Define the global get_system function for ARM
+    const system_info_arm& get_system() {
+        return system_info_arm::instance;
+    }
+
+} // namespace hat
+
+#endif // ARM / AArch64 check

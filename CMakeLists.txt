@@ -159,11 +159,12 @@ target_compile_definitions(libhat PUBLIC
 # Add NEON compile flags for ARM targets if NEON is enabled
 if(LIBHAT_IS_ARM AND NOT LIBHAT_DISABLE_NEON)
     if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-        # Common flags for NEON. Might need adjustment based on specific ARM architecture target.
-        # -mfpu=neon is often sufficient for basic NEON.
-        # Consider adding -mfloat-abi=hard if appropriate for the target.
-        target_compile_options(libhat PRIVATE -mfpu=neon)
-        message(STATUS "Adding NEON compile flags (-mfpu=neon)")
+        # For AArch64, NEON is typically enabled by default.
+        # The -mfpu=neon flag is often unnecessary or unrecognized for aarch64-linux-gnu-g++.
+        # If targeting 32-bit ARM specifically, -mfpu=neon might be needed.
+        # We'll rely on the compiler default for AArch64 for now.
+        # target_compile_options(libhat PRIVATE -mfpu=neon) # Removed this line
+        message(STATUS "NEON enabled for ARM target (relying on compiler defaults for AArch64).")
     elseif(MSVC)
         # MSVC ARM compilation might enable NEON by default or require different flags.
         # Check MSVC documentation for ARM NEON flags if needed.

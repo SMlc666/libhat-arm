@@ -2,11 +2,25 @@
 A modern, high-performance library for C++20 designed around game hacking
 
 ## Feature overview
-- Windows x86/x64 support
-- Vectorized scanning for byte patterns
+- Cross-platform support (Windows, Linux, macOS)
+- Architecture support (x86, x86_64, ARM, AArch64)
+- Vectorized scanning for byte patterns using CPU intrinsics:
+  - x86/x64: SSE 4.1, AVX2, AVX512
+  - ARM/AArch64: NEON (Experimental)
 - RAII memory protector
 - Convenience wrappers over OS APIs
-- Language bindings (C, C#, etc.)
+- Language bindings (C, C#, Java)
+
+## Platform Support
+
+| Platform        | x86 | x86_64 | ARM | AArch64 | Notes                                     |
+|-----------------|-----|--------|-----|---------|-------------------------------------------|
+| **Windows**     | ✔️  | ✔️     | ✔️  | ✔️      | ARM builds via cross-compilation or native |
+| **Linux**       | ✔️  | ✔️     | ✔️  | ✔️      | NEON scanning available                   |
+| **macOS**       | ➖  | ✔️     | ➖  | ✔️      | x86 untested, ARM64 via Apple Silicon     |
+
+*   ✔️ = Supported and tested
+*   ➖ = Untested or potentially limited support
 
 ## Versioning
 This project adheres to [semantic versioning](https://semver.org/spec/v2.0.0.html). Any declaration that
@@ -19,6 +33,7 @@ libhat and [two other](test/benchmark/vendor) commonly used implementations for 
 scanning. The input buffers were randomly generated using a fixed seed, and the pattern
 scanned does not contain any match in the buffer. The benchmark was run on a system with
 an i7-9700K (which supports libhat's [AVX2](src/arch/x86/AVX2.cpp) scanner implementation).
+**Note:** These benchmarks reflect x86_64 performance. ARM NEON performance benchmarks are currently unavailable but NEON optimizations are included.
 The full source code is available [here](test/benchmark/Compare.cpp).
 ```
 ---------------------------------------------------------------------------------------

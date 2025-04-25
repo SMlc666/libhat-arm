@@ -95,7 +95,6 @@ using FindPatternTestTypes = ::testing::Types<
     FindPatternParameters<hat::detail::scan_mode::NEON, 32, 256>,
     FindPatternParameters<hat::detail::scan_mode::NEON, 64, 256>,
 #endif
-#endif
     FindPatternParameters<hat::detail::scan_mode::Single, 1, 256>,
     FindPatternParameters<hat::detail::scan_mode::Single, 3, 256>,
     FindPatternParameters<hat::detail::scan_mode::Single, 8, 256>,

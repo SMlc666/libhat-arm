@@ -77,16 +77,31 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Clang and LLD
+      - name: Install Clang, LLD, and AArch64 libs
         run: |
           sudo apt update
-          sudo apt install -y clang lld
+          # Install clang, lld, and the necessary cross-compilation libraries for aarch64
+          # The exact libstdc++ version might vary, use a wildcard or check available versions
+          sudo apt install -y clang lld libc6-dev-arm64-cross libstdc++-14-dev-arm64-cross # Adjust libstdc++ version if needed
 
       - name: Configure CMake for AArch64 Clang Cross-Compilation
         env:
           CC: clang
           CXX: clang++
-        run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_SYSTEM_NAME=Linux -DCMAKE_SYSTEM_PROCESSOR=aarch64 -DCMAKE_C_FLAGS="--target=aarch64-linux-gnu" -DCMAKE_CXX_FLAGS="--target=aarch64-linux-gnu" -DCMAKE_EXE_LINKER_FLAGS="-fuse-ld=lld" -DCMAKE_SHARED_LINKER_FLAGS="-fuse-ld=lld" -DCMAKE_MODULE_LINKER_FLAGS="-fuse-ld=lld" -DLIBHAT_TESTING=OFF # Disable tests as they cannot run
+        run: |
+          SYSROOT_FLAGS="--sysroot=/usr/aarch64-linux-gnu"
+          cmake -B ${{github.workspace}}/build \
+            -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+            -DCMAKE_SYSTEM_NAME=Linux \
+            -DCMAKE_SYSTEM_PROCESSOR=aarch64 \
+            -DCMAKE_C_COMPILER=clang \
+            -DCMAKE_CXX_COMPILER=clang++ \
+            -DCMAKE_C_FLAGS="--target=aarch64-linux-gnu ${SYSROOT_FLAGS}" \
+            -DCMAKE_CXX_FLAGS="--target=aarch64-linux-gnu ${SYSROOT_FLAGS}" \
+            -DCMAKE_EXE_LINKER_FLAGS="-fuse-ld=lld ${SYSROOT_FLAGS}" \
+            -DCMAKE_SHARED_LINKER_FLAGS="-fuse-ld=lld ${SYSROOT_FLAGS}" \
+            -DCMAKE_MODULE_LINKER_FLAGS="-fuse-ld=lld ${SYSROOT_FLAGS}" \
+            -DLIBHAT_TESTING=OFF # Disable tests as they cannot run
 
       - name: Build
         run: cmake --build ${{github.workspace}}/build -j 4

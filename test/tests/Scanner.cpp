@@ -95,14 +95,6 @@ using FindPatternTestTypes = ::testing::Types<
     FindPatternParameters<hat::detail::scan_mode::NEON, 32, 256>,
     FindPatternParameters<hat::detail::scan_mode::NEON, 64, 256>,
 #endif
-#if defined(LIBHAT_IS_ARM) && !defined(LIBHAT_DISABLE_NEON)
-// Debug print to confirm NEON test types are included
-struct NeonTestTypeChecker {
-    NeonTestTypeChecker() {
-        printf("NEON test types included in compilation.\n");
-    }
-};
-static NeonTestTypeChecker neon_checker;
 #endif
     FindPatternParameters<hat::detail::scan_mode::Single, 1, 256>,
     FindPatternParameters<hat::detail::scan_mode::Single, 3, 256>,

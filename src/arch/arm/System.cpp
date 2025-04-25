@@ -40,14 +40,12 @@ namespace hat {
         // Let's assume base constructor handles page_size for now.
     }
 
-    // Define the static instance (required by the header declaration)
-    // This will call the constructor upon program startup.
-    const system_info_arm system_info_arm::instance;
-
-    // Define the global get_system function for ARM
-    const system_info_arm& get_system() {
-        return system_info_arm::instance;
-    }
+    // Remove the definitions of instance and get_system() for ARM here.
+    // They are now defined conditionally in src/System.cpp
+    // const system_info_arm system_info_arm::instance;
+    // const system_info_arm& get_system() {
+    //     return system_info_arm::instance;
+    // }
 
 } // namespace hat
 

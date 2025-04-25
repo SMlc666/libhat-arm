@@ -130,7 +130,7 @@ jobs:
           sudo apt install -y g++ # Install native g++
 
       - name: Configure CMake (Native ARM) # Simplified CMake configuration for native build
-        run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DLIBHAT_TESTING=ON
+        run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DLIBHAT_TESTING=ON -DLIBHAT_TESTING_SDE=OFF # Disable SDE for native ARM tests
 
       - name: Build
         run: cmake --build ${{github.workspace}}/build -j 4

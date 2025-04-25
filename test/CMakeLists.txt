@@ -55,7 +55,23 @@ endif()
 function(register_test NAME SOURCE)
     add_executable(${NAME} ${SOURCE})
     target_link_libraries(${NAME} PRIVATE gtest gtest_main benchmark libhat)
-    add_test(NAME ${NAME} COMMAND ${LIBHAT_TEST_COMMAND_PREFIX} $<TARGET_FILE:${NAME}> --benchmark_counters_tabular=true)
+
+    if(LIBHAT_TESTING_SDE AND LIBHAT_SETUP_SDE)
+        # Pass SDE command and arguments as separate list items
+        add_test(NAME ${NAME} COMMAND
+            ${intel_sde_SOURCE_DIR}/${LIBHAT_SDE_EXECUTABLE}
+            -gnr
+            --
+            $<TARGET_FILE:${NAME}>
+            --benchmark_counters_tabular=true
+        )
+    else()
+        # Run the test directly without SDE
+        add_test(NAME ${NAME} COMMAND
+            $<TARGET_FILE:${NAME}>
+            --benchmark_counters_tabular=true
+        )
+    endif()
 endfunction()
 
 register_test(libhat_benchmark_compare benchmark/Compare.cpp)

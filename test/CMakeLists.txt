@@ -56,6 +56,12 @@ function(register_test NAME SOURCE)
     add_executable(${NAME} ${SOURCE})
     target_link_libraries(${NAME} PRIVATE gtest gtest_main benchmark libhat)
 
+    # Pass LIBHAT_IS_ARM and LIBHAT_DISABLE_NEON definitions to the test executable
+    target_compile_definitions(${NAME} PRIVATE
+        $<$<BOOL:${LIBHAT_IS_ARM}>:LIBHAT_IS_ARM>
+        $<$<BOOL:${LIBHAT_DISABLE_NEON}>:LIBHAT_DISABLE_NEON>
+    )
+
     if(LIBHAT_TESTING_SDE AND LIBHAT_SETUP_SDE)
         # Pass SDE command and arguments as separate list items
         add_test(NAME ${NAME} COMMAND

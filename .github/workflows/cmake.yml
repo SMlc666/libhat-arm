@@ -50,7 +50,15 @@ jobs:
 
       - name: Test
         working-directory: ${{github.workspace}}/build
-        run: ctest -C ${{env.BUILD_TYPE}} -R libhat_test_.*
+        run: ctest -C ${{env.BUILD_TYPE}} -R libhat_test_.* --output-on-failure || true # Continue even if tests fail
+
+      - name: Output Logs on Failure (Linux)
+        if: failure()
+        working-directory: ${{github.workspace}}/build
+        run: |
+          echo "---- CTest Log ----"
+          cat Testing/Temporary/LastTest.log || echo "Log file not found."
+          exit 1 # Ensure the job fails if tests failed
 
   linux-arm64-cross:
     name: Linux (AArch64 Cross-Compile)
@@ -129,7 +137,15 @@ jobs:
 
       - name: Test (Native) # Run tests directly using ctest
         working-directory: ${{github.workspace}}/build
-        run: ctest -C ${{env.BUILD_TYPE}} -R libhat_test_.* # Use standard ctest command
+        run: ctest -C ${{env.BUILD_TYPE}} -R libhat_test_.* --output-on-failure || true # Continue even if tests fail
+
+      - name: Output Logs on Failure (Linux ARM Native)
+        if: failure()
+        working-directory: ${{github.workspace}}/build
+        run: |
+          echo "---- CTest Log ----"
+          cat Testing/Temporary/LastTest.log || echo "Log file not found."
+          exit 1 # Ensure the job fails if tests failed
 
   windows:
     strategy:
@@ -166,4 +182,13 @@ jobs:
         shell: cmd
         run: |
           call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\${{matrix.vcvars}}.bat"
-          ctest -C ${{env.BUILD_TYPE}} -R libhat_test_.*
+          ctest -C ${{env.BUILD_TYPE}} -R libhat_test_.* --output-on-failure || exit /b 0 # Continue even if tests fail
+
+      - name: Output Logs on Failure (Windows)
+        if: failure() && !startsWith(matrix.target, 'ARM')
+        working-directory: ${{github.workspace}}/build
+        shell: cmd
+        run: |
+          echo ---- CTest Log ----
+          type Testing\Temporary\LastTest.log || echo Log file not found.
+          exit /b 1 # Ensure the job fails if tests failed

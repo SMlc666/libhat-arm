@@ -7,7 +7,7 @@
 
 #ifdef LIBHAT_LINUX // Only implement Linux detection for now
 #include <sys/auxv.h>
-#include <asm/hwcap.h> // For HWCAP_NEON definition
+// #include <asm/hwcap.h> // HWCAP_NEON might not be defined here for aarch64, use literal value instead
 #endif
 
 namespace hat {
@@ -15,9 +15,11 @@ namespace hat {
 #ifdef LIBHAT_LINUX
     static bool detect_neon() {
         unsigned long hwcap = getauxval(AT_HWCAP);
-        return (hwcap & HWCAP_NEON) != 0;
-        // Note: For AArch64, NEON is mandatory, but checking HWCAP is still good practice.
-        // More robust checks might involve AT_HWCAP2 for specific NEON features if needed later.
+        // According to Linux kernel source (arch/arm64/include/uapi/asm/hwcap.h), HWCAP_NEON is (1 << 1)
+        constexpr unsigned long NEON_BIT = (1 << 1);
+        return (hwcap & NEON_BIT) != 0;
+        // Note: For AArch64, NEON is mandatory according to ARMv8-A spec,
+        // but checking HWCAP provides confirmation from the OS/kernel perspective.
     }
 #else
     // Placeholder for other OS (Windows on ARM, macOS ARM)

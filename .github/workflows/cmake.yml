@@ -108,31 +108,28 @@ jobs:
 
       # Note: Cannot run tests as the runner is x86_64
 
-  linux-arm64-qemu-test:
-    name: Linux (AArch64 QEMU Test)
-    runs-on: ubuntu-latest
+  linux-arm64-native-test: # Renamed job
+    name: Linux (AArch64 Native Test) # Updated name
+    runs-on: ubuntu-24.04-arm # Changed runner to native ARM
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: arm64 # Setup QEMU for arm64 architecture
+      # QEMU setup is no longer needed
 
-      - name: Install AArch64 Cross-Compiler and QEMU static
+      - name: Install Build Tools # Install native compiler (e.g., g++)
         run: |
           sudo apt update
-          sudo apt install -y g++-aarch64-linux-gnu qemu-user-static
+          sudo apt install -y g++ # Install native g++
 
-      - name: Configure CMake for AArch64 Cross-Compilation (with Tests)
-        run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_SYSTEM_NAME=Linux -DCMAKE_SYSTEM_PROCESSOR=aarch64 -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++ -DLIBHAT_TESTING=ON
+      - name: Configure CMake (Native ARM) # Simplified CMake configuration for native build
+        run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DLIBHAT_TESTING=ON
 
       - name: Build
         run: cmake --build ${{github.workspace}}/build -j 4
 
-      - name: Test (via QEMU)
+      - name: Test (Native) # Run tests directly using ctest
         working-directory: ${{github.workspace}}/build
-        run: qemu-aarch64-static ./bin/libhat_tests # Assuming tests executable is named libhat_tests and located in build/bin
+        run: ctest -C ${{env.BUILD_TYPE}} -R libhat_test_.* # Use standard ctest command
 
   windows:
     strategy:
